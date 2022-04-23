@@ -2,6 +2,10 @@
 .gradle
 /build/
 stub/build/*
+client/build/*
+protos/build/*
+server/build/*
+
 # Ignore Gradle GUI config
 gradle-app.setting
 
