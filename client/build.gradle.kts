@@ -11,7 +11,7 @@ dependencies {
 tasks.register<JavaExec>("BarClient") {
     dependsOn("classes")
     classpath = sourceSets["main"].runtimeClasspath
-    mainClass.set("com.jjc.grpc.services.starter.BarClientKt")
+    mainClass.set("com.jjc.grpc.services.BarClientKt")
 }
 
 val barClientStartScripts = tasks.register<CreateStartScripts>("barClientStartScripts") {

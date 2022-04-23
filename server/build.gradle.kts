@@ -21,6 +21,7 @@ val barServerStartScripts = tasks.register<CreateStartScripts>("barServerStartSc
     classpath = tasks.named<CreateStartScripts>("startScripts").get().classpath
 }
 
+
 tasks.named("startScripts") {
     dependsOn(barServerStartScripts)
 }

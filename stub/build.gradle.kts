@@ -1,8 +1,5 @@
-import com.google.protobuf.gradle.generateProtoTasks
-import com.google.protobuf.gradle.id
-import com.google.protobuf.gradle.plugins
-import com.google.protobuf.gradle.protobuf
-import com.google.protobuf.gradle.protoc
+import com.google.protobuf.gradle.*
+import org.gradle.api.JavaVersion.VERSION_1_8
 
 plugins {
     kotlin("jvm")
@@ -21,7 +18,7 @@ dependencies {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = VERSION_1_8
 }
 
 sourceSets {

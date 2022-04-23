@@ -1,7 +1,7 @@
 package com.jjc.grpc.services
 
 import com.google.protobuf.Timestamp
-import com.jjc.grpc.services.starter.*
+import com.jjc.grpc.services.PaymentStatus.*
 import io.grpc.Server
 import io.grpc.ServerBuilder
 import java.time.Instant
@@ -9,20 +9,23 @@ import java.util.*
 
 
 class BarServer(private val port: Int) {
+
+    private val userRepository = UserRepositoryAdapter()
     private val server: Server = ServerBuilder
-            .forPort(port)
-            .addService(HyptoBarService())
-            .build()
+        .forPort(port)
+        .addService(HyptoBarService())
+        .addService(UserGrpcService(userRepository))
+        .build()
 
     fun start() {
         server.start()
         println("Server started, listening on $port")
         Runtime.getRuntime().addShutdownHook(
-                Thread {
-                    println("*** shutting down gRPC server since JVM is shutting down")
-                    this@BarServer.stop()
-                    println("*** server shut down")
-                }
+            Thread {
+                println("*** shutting down gRPC server since JVM is shutting down")
+                this@BarServer.stop()
+                println("*** server shut down")
+            }
         )
     }
 
@@ -32,6 +35,13 @@ class BarServer(private val port: Int) {
 
     fun blockUntilShutdown() {
         server.awaitTermination()
+    }
+
+    private class UserGrpcService(private val userRepository: UserRepository) : UserGrpcKt.UserCoroutineImplBase() {
+        override suspend fun findById(request: FindUserRequest): UserResponse {
+            return userRepository.findById(request.userId).asDto()
+        }
+
     }
 
     private class HyptoBarService : BarGrpcKt.BarCoroutineImplBase() {
@@ -47,7 +57,7 @@ class BarServer(private val port: Int) {
             DrinkType.BEER to ContainerType.JUG
         )
 
-        fun Drink.getOrderAmount() : Long = when(this.type) {
+        fun Drink.getOrderAmount(): Long = when (this.type) {
             DrinkType.BEER -> 100
             DrinkType.VODKA -> 150
             DrinkType.RUM -> 50
@@ -57,7 +67,7 @@ class BarServer(private val port: Int) {
             else -> throw Exception("Bad Request: Unsupported drink type")
         }
 
-        fun Drink.pour() : Container = run {
+        fun Drink.pour(): Container = run {
             Container.newBuilder()
                 .setContainerId(UUID.randomUUID().toString())
                 .setDrink(this)
@@ -65,7 +75,7 @@ class BarServer(private val port: Int) {
                 .build()
         }
 
-        fun Long.generateBill() : Bill {
+        fun Long.generateBill(): Bill {
             val orderId = UUID.randomUUID().toString()
             val time = Instant.now()
             val currTimestamp = Timestamp.newBuilder()
@@ -79,7 +89,7 @@ class BarServer(private val port: Int) {
                 .setOrderTimestamp(currTimestamp)
                 .build()
 
-            processedOrders[currentBill] = PaymentStatus.PENDING
+            processedOrders[currentBill] = PENDING
             return currentBill
         }
 
@@ -101,7 +111,7 @@ class BarServer(private val port: Int) {
 
         override suspend fun orderMultipleDrinks(request: DrinksRequest): DrinksResponse {
             println("Requested order:\n$request")
-            var orderAmount:Long = 0
+            var orderAmount: Long = 0
             val containers = request.drinksList.map {
                 orderAmount += it.getOrderAmount()
                 it.pour()
@@ -114,31 +124,31 @@ class BarServer(private val port: Int) {
         }
 
         override suspend fun payBill(request: PaymentRequest): PaymentResponse {
-            return when(processedOrders[request.bill]) {
-                PaymentStatus.PENDING, PaymentStatus.FAILED -> {
-                    if(request.bill.orderAmount > request.paymentAmount) {
-                        processedOrders[request.bill] = PaymentStatus.FAILED
+            return when (processedOrders[request.bill]) {
+                PENDING, FAILED -> {
+                    if (request.bill.orderAmount > request.paymentAmount) {
+                        processedOrders[request.bill] = FAILED
                         PaymentResponse.newBuilder()
                             .setBalanceAmount(request.paymentAmount)
-                            .setStatus(PaymentStatus.FAILED)
+                            .setStatus(FAILED)
                             .setReason("Bill amount is ${request.bill.orderAmount} but you have only paid ${request.paymentAmount}")
                             .build()
                     } else {
                         processedOrders.remove(request.bill)
                         PaymentResponse.newBuilder()
                             .setBalanceAmount(request.paymentAmount - request.bill.orderAmount)
-                            .setStatus(PaymentStatus.PAID)
+                            .setStatus(PAID)
                             .setReason("Bill paid successfully!!")
                             .build()
                     }
                 }
                 else -> {
-                    if(processedOrders.contains(request.bill)) {
+                    if (processedOrders.contains(request.bill)) {
                         processedOrders.remove(request.bill)
                     }
                     PaymentResponse.newBuilder()
                         .setBalanceAmount(request.paymentAmount)
-                        .setStatus(PaymentStatus.FAILED)
+                        .setStatus(FAILED)
                         .setReason("Bill with id=${request.bill.orderId} not found! Either it was never created or it was already paid!!")
                         .build()
                 }

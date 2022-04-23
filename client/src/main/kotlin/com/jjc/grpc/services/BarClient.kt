@@ -1,6 +1,5 @@
 package com.jjc.grpc.services
 
-import com.jjc.grpc.services.starter.*
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import java.io.Closeable
@@ -25,7 +24,7 @@ class BarClient(private val channel: ManagedChannel) : Closeable {
         return response.bill
     }
 
-    suspend fun payBill(bill: Bill, paymentAmount: Long) : Long {
+    suspend fun payBill(bill: Bill, paymentAmount: Long): Long {
         val request = PaymentRequest.newBuilder()
             .setBill(bill)
             .setPaymentAmount(paymentAmount)
@@ -54,7 +53,7 @@ suspend fun main() {
     val channel = ManagedChannelBuilder.forAddress("localhost", port).usePlaintext().build()
 
     val client = BarClient(channel)
-    
+
     var wallet: Long = 1000
 
     val bills = mutableListOf<Bill>()
@@ -62,7 +61,8 @@ suspend fun main() {
         client.orderDrink(
             "Johnnie Walker Blue Label",
             DrinkType.WHISKY,
-            30)
+            30
+        )
     )
     Thread.sleep(2000)
 
@@ -70,7 +70,8 @@ suspend fun main() {
         client.orderDrink(
             "Absolut",
             DrinkType.VODKA,
-            60)
+            60
+        )
     )
     Thread.sleep(2000)
 
@@ -78,7 +79,8 @@ suspend fun main() {
         client.orderDrink(
             "Kingfisher Ultra",
             DrinkType.BEER,
-            300)
+            300
+        )
     )
     Thread.sleep(2000)
 
