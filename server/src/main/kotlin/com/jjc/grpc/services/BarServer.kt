@@ -41,7 +41,6 @@ class BarServer(private val port: Int) {
         override suspend fun findById(request: FindUserRequest): UserResponse {
             return userRepository.findById(request.userId).asDto()
         }
-
     }
 
     private class HyptoBarService : BarGrpcKt.BarCoroutineImplBase() {
